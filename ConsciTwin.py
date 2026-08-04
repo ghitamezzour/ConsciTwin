@@ -25,7 +25,6 @@ class CognitiveCore:
             self.trust = min(100, self.trust + 2)
             
     def get_decision(self, coach_cmd):
-        # The Twin's Analysis (The Self-Critique)
         analysis = {
             "Coach_Command": coach_cmd,
             "Trust_Meter": self.trust,
@@ -54,12 +53,8 @@ class AutonomicLayer:
 # ==========================================
 # STREAMLIT UI
 # ==========================================
-st.set_page_config(layout="wide")
-st.title("ConsciTwin: The Self-Critiquing Twin")
-
-st.markdown("""
-**The Real Value:** The Twin doesn't just drive. It **critiques itself** and shows you the math behind every decision.
-""")
+st.set_page_config(layout="wide", page_title="ConsciTwin")
+st.title("ConsciTwin: The Self-Critiquing Digital Twin")
 
 # Sidebar
 st.sidebar.header("The Coach (Human)")
@@ -87,63 +82,86 @@ analysis = twin.get_decision(coach_cmd)
 speed = player.execute(analysis["Decision"])
 
 # ==========================================
-# THE ROAD VISUALIZATION
+# THE TACTICAL GRID VISUALIZATION
 # ==========================================
 fig = go.Figure()
 
-# Road
-fig.add_shape(type="rect", x0=-5, y0=-2, x1=5, y1=35,
-              line=dict(color="White", width=2),
-              fillcolor="rgba(30, 30, 30, 0.8)")
+# 1. Bright Tactical Pitch Background
+fig.add_shape(type="rect", x0=-10, y0=-5, x1=10, y1=25,
+              line=dict(color="white", width=2),
+              fillcolor="rgba(220, 220, 220, 1)") # Bright Grey Background
 
-# Lane lines
-for y in range(0, 35, 5):
+# 2. Draw Tactical Grid Lines (Simulating the white lines on your slide)
+for y in range(0, 25, 5):
     fig.add_trace(go.Scatter(
-        x=[-1, 1], y=[y, y+2],
-        mode='lines', line=dict(color='white', width=1, dash='dash'),
+        x=[-8, 8], y=[y, y],
+        mode='lines', line=dict(color='white', width=1.5),
         showlegend=False, hoverinfo='none'
     ))
 
-# Ego Car (Blue)
+# 3. Draw the Ego Car (Blue - ConsciTwin)
+# Positioned at the bottom, slightly left
+ego_x = -2.0
 ego_y = 2.0
 fig.add_trace(go.Scatter(
-    x=[0], y=[ego_y],
-    mode='markers+text', marker=dict(size=20, color='blue', symbol='square'),
-    text=["Ego"], textposition="bottom center",
-    name='Ego Car (ConsciTwin)'
+    x=[ego_x], y=[ego_y],
+    mode='markers+text',
+    marker=dict(size=25, color='blue', symbol='square', line=dict(width=2, color='black')),
+    text=["Ego"], textposition="bottom center", textfont=dict(color='black', size=12),
+    name='Ego (ConsciTwin)'
 ))
 
-# Teammate (Red)
+# 4. Draw the Teammate (The "Block")
+# The teammate is positioned ahead. If trust drops, it turns red.
+team_x = 2.0
 team_y = ego_y + distance
-team_color = "green" if twin.trust > 60 else "red"
-team_label = "Teammate (Normal)" if twin.trust > 60 else "Teammate (Swerving!)"
+team_color = "#00CC00" if twin.trust > 60 else "#CC0000" # Green or Red
+team_label = "Teammate (Safe)" if twin.trust > 60 else "Teammate (Swerving!)"
 
 fig.add_trace(go.Scatter(
-    x=[0], y=[team_y],
-    mode='markers+text', marker=dict(size=20, color=team_color, symbol='circle'),
-    text=[team_label], textposition="top center",
+    x=[team_x], y=[team_y],
+    mode='markers+text',
+    marker=dict(size=25, color=team_color, symbol='circle', line=dict(width=2, color='black')),
+    text=[team_label], textposition="top center", textfont=dict(color='black', size=12),
     name='Teammate'
 ))
 
-# Self-Critique Banner
+# 5. Draw the "Defensive Block" line (Connecting to an imaginary 3rd car)
+# This visually mimics the Morocco red block.
+fig.add_trace(go.Scatter(
+    x=[team_x - 2, team_x, team_x + 2],
+    y=[team_y - 1, team_y, team_y - 1],
+    mode='lines+markers',
+    line=dict(color='#FFA500', width=4), # Orange block line
+    marker=dict(size=10, color='#FFA500', symbol='circle'),
+    name='Tactical Block',
+    showlegend=False
+))
+
+# 6. Override Warning Sign (Only if the Twin intervenes)
 if "Veto" in analysis["Decision"] or "Trust Drop" in analysis["Decision"]:
     fig.add_annotation(
-        x=0, y=18,
-        text=f"🧠 TWIN SELF-CRITIQUE: {analysis['Reason']}",
-        showarrow=False, font=dict(color="orange", size=14)
+        x=0, y=15,
+        text=f"⚠️ TWIN SELF-CRITIQUE: {analysis['Reason']}",
+        showarrow=False,
+        font=dict(color="red", size=16, family="Arial Black")
     )
 
+# 7. Final Styling
 fig.update_layout(
-    title="Live Road View (The Twin's Perspective)",
-    xaxis=dict(range=[-5, 5], showgrid=False, zeroline=False, visible=False),
-    yaxis=dict(range=[-2, 35], showgrid=False, zeroline=False, visible=False),
+    title="Live Tactical Grid (Top-Down)",
+    xaxis=dict(range=[-10, 10], showgrid=False, zeroline=False, visible=False),
+    yaxis=dict(range=[-5, 25], showgrid=False, zeroline=False, visible=False),
     height=600,
-    plot_bgcolor='#1a1a1a', paper_bgcolor='#1a1a1a',
-    font=dict(color='white')
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(color='black'),
+    showlegend=True,
+    legend=dict(x=0.02, y=0.98, bgcolor='rgba(255,255,255,0.8)')
 )
 
 # ==========================================
-# THE "SELF-CRITIQUE" DASHBOARD
+# DISPLAY
 # ==========================================
 col1, col2 = st.columns([2, 1])
 
@@ -151,20 +169,17 @@ with col1:
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    st.subheader("The Twin's Self-Critique")
-    
-    st.metric("Trust Meter", f"{twin.trust:.1f}%")
-    st.metric("Physics Risk", f"{twin.risk*100:.0f}%")
-    st.metric("Current Speed", f"{speed:.0f} km/h")
-    
-    st.info(f"**Coach Command:** {analysis['Coach_Command']}")
-    st.success(f"**Twin Analysis:** {analysis['Reason']}")
-    st.warning(f"**Twin Final Decision:** {analysis['Decision']}")
-    
-    st.markdown("---")
     st.subheader("📋 Live Audit Log")
     
-    # Show the last 3 decisions
-    for entry in twin.analysis_log[-3:]:
-        st.caption(f"🕒 {time.strftime('%H:%M:%S')} - {entry['Reason']}")
-        st.caption(f"   -> Final: {entry['Decision']}")
+    # Display key metrics with clear boxes
+    st.metric("Trust Meter", f"{twin.trust:.1f}%")
+    st.metric("Physics Risk", f"{twin.risk*100:.0f}%")
+    
+    # The Analysis Boxes (The "Self-Critique")
+    st.info(f"👤 **Coach Command:** {analysis['Coach_Command']}")
+    st.success(f"🧠 **Twin Analysis:** {analysis['Reason']}")
+    
+    if "Veto" in analysis["Decision"] or "Trust Drop" in analysis["Decision"]:
+        st.error(f"⚖️ **Twin Final Decision:** {analysis['Decision']} (Override)")
+    else:
+        st.warning(f"⚖️ **Twin Final Decision:** {analysis['Decision']} (Agreement)")
