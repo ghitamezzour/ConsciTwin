@@ -86,72 +86,59 @@ speed = player.execute(analysis["Decision"])
 # ==========================================
 fig = go.Figure()
 
-# 1. Bright Tactical Pitch Background
-fig.add_shape(type="rect", x0=-10, y0=-5, x1=10, y1=25,
-              line=dict(color="white", width=2),
-              fillcolor="rgba(220, 220, 220, 1)") # Bright Grey Background
+# 1. Bright Tactical Pitch Background (FORCED RANGE)
+# We force the X-axis to go from -15 to 15, and Y-axis from -10 to 30
+fig.add_shape(type="rect", x0=-15, y0=-10, x1=15, y1=30,
+              line=dict(color="black", width=2),
+              fillcolor="rgba(240, 240, 240, 1)") # Light Grey Background
 
-# 2. Draw Tactical Grid Lines (Simulating the white lines on your slide)
-for y in range(0, 25, 5):
+# 2. Draw Tactical Grid Lines
+for y in range(-5, 30, 5):
     fig.add_trace(go.Scatter(
-        x=[-8, 8], y=[y, y],
-        mode='lines', line=dict(color='white', width=1.5),
+        x=[-12, 12], y=[y, y],
+        mode='lines', line=dict(color='white', width=2),
         showlegend=False, hoverinfo='none'
     ))
 
 # 3. Draw the Ego Car (Blue - ConsciTwin)
-# Positioned at the bottom, slightly left
 ego_x = -2.0
 ego_y = 2.0
 fig.add_trace(go.Scatter(
     x=[ego_x], y=[ego_y],
     mode='markers+text',
-    marker=dict(size=25, color='blue', symbol='square', line=dict(width=2, color='black')),
-    text=["Ego"], textposition="bottom center", textfont=dict(color='black', size=12),
+    marker=dict(size=30, color='blue', symbol='square', line=dict(width=2, color='black')),
+    text=["Ego"], textposition="bottom center", textfont=dict(color='black', size=14, family="Arial Black"),
     name='Ego (ConsciTwin)'
 ))
 
-# 4. Draw the Teammate (The "Block")
-# The teammate is positioned ahead. If trust drops, it turns red.
+# 4. Draw the Teammate
 team_x = 2.0
 team_y = ego_y + distance
-team_color = "#00CC00" if twin.trust > 60 else "#CC0000" # Green or Red
-team_label = "Teammate (Safe)" if twin.trust > 60 else "Teammate (Swerving!)"
+team_color = "#00CC00" if twin.trust > 60 else "#CC0000"
+team_label = "Teammate" if twin.trust > 60 else "Teammate (SWERVING!)"
 
 fig.add_trace(go.Scatter(
     x=[team_x], y=[team_y],
     mode='markers+text',
-    marker=dict(size=25, color=team_color, symbol='circle', line=dict(width=2, color='black')),
-    text=[team_label], textposition="top center", textfont=dict(color='black', size=12),
+    marker=dict(size=30, color=team_color, symbol='circle', line=dict(width=2, color='black')),
+    text=[team_label], textposition="top center", textfont=dict(color='black', size=14, family="Arial Black"),
     name='Teammate'
 ))
 
-# 5. Draw the "Defensive Block" line (Connecting to an imaginary 3rd car)
-# This visually mimics the Morocco red block.
-fig.add_trace(go.Scatter(
-    x=[team_x - 2, team_x, team_x + 2],
-    y=[team_y - 1, team_y, team_y - 1],
-    mode='lines+markers',
-    line=dict(color='#FFA500', width=4), # Orange block line
-    marker=dict(size=10, color='#FFA500', symbol='circle'),
-    name='Tactical Block',
-    showlegend=False
-))
-
-# 6. Override Warning Sign (Only if the Twin intervenes)
+# 5. Override Warning Sign
 if "Veto" in analysis["Decision"] or "Trust Drop" in analysis["Decision"]:
     fig.add_annotation(
         x=0, y=15,
-        text=f"⚠️ TWIN SELF-CRITIQUE: {analysis['Reason']}",
+        text=f"⚠️ TWIN OVERRIDE: {analysis['Reason']}",
         showarrow=False,
-        font=dict(color="red", size=16, family="Arial Black")
+        font=dict(color="red", size=18, family="Arial Black")
     )
 
-# 7. Final Styling
+# 6. Final Styling (Explicitly forced ranges)
 fig.update_layout(
-    title="Live Tactical Grid (Top-Down)",
-    xaxis=dict(range=[-10, 10], showgrid=False, zeroline=False, visible=False),
-    yaxis=dict(range=[-5, 25], showgrid=False, zeroline=False, visible=False),
+    title="Live Tactical Grid",
+    xaxis=dict(range=[-15, 15], showgrid=False, zeroline=False, visible=False),
+    yaxis=dict(range=[-10, 30], showgrid=False, zeroline=False, visible=False), # <--- FORCED RANGE
     height=600,
     plot_bgcolor='white',
     paper_bgcolor='white',
@@ -170,16 +157,9 @@ with col1:
 
 with col2:
     st.subheader("📋 Live Audit Log")
-    
-    # Display key metrics with clear boxes
     st.metric("Trust Meter", f"{twin.trust:.1f}%")
     st.metric("Physics Risk", f"{twin.risk*100:.0f}%")
     
-    # The Analysis Boxes (The "Self-Critique")
     st.info(f"👤 **Coach Command:** {analysis['Coach_Command']}")
     st.success(f"🧠 **Twin Analysis:** {analysis['Reason']}")
-    
-    if "Veto" in analysis["Decision"] or "Trust Drop" in analysis["Decision"]:
-        st.error(f"⚖️ **Twin Final Decision:** {analysis['Decision']} (Override)")
-    else:
-        st.warning(f"⚖️ **Twin Final Decision:** {analysis['Decision']} (Agreement)")
+    st.warning(f"⚖️ **Twin Final Decision:** {analysis['Decision']}")
