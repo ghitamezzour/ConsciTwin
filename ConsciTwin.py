@@ -17,12 +17,9 @@ st.set_page_config(
 # Custom CSS for Modern, Minimal Design
 st.markdown("""
 <style>
-    /* Main Container Styling */
     .main {
         padding: 0rem 1rem;
     }
-    
-    /* Card Styling */
     .stApp [data-testid="stVerticalBlock"] > div {
         background-color: #ffffff;
         padding: 20px;
@@ -30,8 +27,6 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         margin-bottom: 20px;
     }
-    
-    /* Step Headers */
     h3 {
         font-family: 'Helvetica Neue', sans-serif;
         font-weight: 600;
@@ -40,19 +35,12 @@ st.markdown("""
         border-bottom: 2px solid #e2e8f0;
         margin-bottom: 20px;
     }
-    
-    /* Metric Cards */
     .metric-card {
         background: #f8fafc;
         padding: 15px;
         border-radius: 8px;
         border-left: 4px solid #3b82f6;
     }
-    
-    /* Brand Colors */
-    .brand-primary { color: #3b82f6; }
-    .brand-secondary { color: #10b981; }
-    .brand-accent { color: #f59e0b; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -108,16 +96,15 @@ class AutonomicLayer:
 # 3. SIDEBAR: HOW IT WORKS & TRUST
 # ==========================================
 with st.sidebar:
-    st.image("https://via.placeholder.com/150x50?text=ConsciTwin", use_column_width=True)
+    st.title("🧠 ConsciTwin")
     st.markdown("---")
-    st.header("How ConsciTwin Works")
+    st.header("How It Works")
     st.info("ConsciTwin is a self-critiquing Digital Twin. It acts as a safety referee, analyzing the environment and overriding unsafe human commands.")
     
     st.markdown("---")
     st.header("Ethical Guidelines")
     st.success("✅ **Transparency:** Every decision is logged and explained.")
     st.success("✅ **Safety First:** Physics and Trust override human error.")
-    st.success("✅ **Continuous Learning:** The system adapts to regional driving behaviors.")
     
     st.markdown("---")
     st.caption("🔒 Privacy Note: No real-world data is stored. All simulations are local.")
@@ -160,30 +147,26 @@ with st.container():
         st.metric("Current Speed", "65 km/h", delta="Normal")
         st.metric("Weather Risk", f"{weather_risk*100:.0f}%", delta="Incoming")
 
-# --- STEP 3: CONSCITWIN GENERATION (The Simulation) ---
+# --- STEP 3: CONSCITWIN GENERATION ---
 with st.container():
     st.markdown("### Step 3: Twin Generation & Self-Critique")
     
     if st.button("🚀 Run ConsciTwin Simulation", type="primary"):
         with st.spinner("ConsciTwin is analyzing the environment and critiquing its own decisions..."):
-            time.sleep(1.5) # Simulate processing time
+            time.sleep(1.5)
             
-            # Initialize Logic
             translator = Translator()
             twin = CognitiveCore()
             player = AutonomicLayer()
             
-            # Simulate Distance
             distance = 15.0 + 2.0 * math.sin(time.time() * 0.3)
             
-            # Run the Twin
             twin.update(distance)
             coach_cmd = translator.set_strategy(strategy)
             twin.risk = weather_risk
             analysis = twin.get_decision(coach_cmd)
             speed = player.execute(analysis["Decision"])
             
-            # Store in Session State for persistence
             st.session_state['analysis'] = analysis
             st.session_state['speed'] = speed
             st.session_state['distance'] = distance
@@ -193,13 +176,12 @@ with st.container():
     else:
         st.info("Click the button above to generate a new simulation.")
 
-# Display Output if it exists
+# --- STEP 4: OUTPUT DISPLAY ---
 if 'analysis' in st.session_state:
     analysis = st.session_state['analysis']
     twin = st.session_state['twin']
     speed = st.session_state['speed']
     
-    # --- STEP 4: OUTPUT VISUALIZATION (The Tactical Grid) ---
     fig = go.Figure()
     fig.add_shape(type="rect", x0=-20, y0=-10, x1=20, y1=40,
                   line=dict(color="black", width=2), fillcolor="rgba(240, 240, 240, 1)")
@@ -208,12 +190,10 @@ if 'analysis' in st.session_state:
         fig.add_trace(go.Scatter(x=[-15, 15], y=[y, y], mode='lines', 
                                  line=dict(color='white', width=2), showlegend=False))
     
-    # Ego Car (Blue)
     fig.add_trace(go.Scatter(x=[-3], y=[2], mode='markers+text',
         marker=dict(size=35, color='royalblue', symbol='square', line=dict(width=2, color='black')),
         text=["EGO"], textposition="bottom center", textfont=dict(color='black', size=14), name='Ego Car'))
     
-    # Teammate (Green/Red)
     team_y = 2.0 + st.session_state['distance']
     team_color = "#00CC00" if twin.trust > 60 else "#CC0000"
     team_label = "TEAMMATE" if twin.trust > 60 else "SWERVING!"
@@ -221,7 +201,6 @@ if 'analysis' in st.session_state:
         marker=dict(size=35, color=team_color, symbol='circle', line=dict(width=2, color='black')),
         text=[team_label], textposition="top center", textfont=dict(color='black', size=14), name='Teammate'))
     
-    # Override Warning
     if analysis["Status"] == "Override":
         fig.add_annotation(x=0, y=25, text=f"⚠️ TWIN SELF-CRITIQUE: {analysis['Reason']}",
                            showarrow=False, font=dict(color="red", size=16))
